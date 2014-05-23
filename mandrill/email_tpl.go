@@ -12,7 +12,7 @@ import (
 type Email struct {
 	Key        string   `json:"key"`
 	TplName    string   `json:"template_name"`
-	TplContent []KeyVal `json:"template_content,omitempty"`
+	TplContent []KeyVal `json:"template_content"`
 	Message    Message  `json:"message"`
 }
 
