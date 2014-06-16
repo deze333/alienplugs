@@ -17,9 +17,10 @@ const (
 )
 
 //------------------------------------------------------------
-// Constructor
+// Methods
 //------------------------------------------------------------
 
+// Submit form to hubspot forms - form should have the hubspot ctx from BuildSubmit
 func Submit(portalId, formId string, form map[string]string) (err error) {
 
     v := toValues(form)
@@ -36,22 +37,6 @@ func Submit(portalId, formId string, form map[string]string) (err error) {
     }
 
     return
-}
-
-// Convert a map to url.Values
-func toValues(m map[string]string) (vs url.Values) {
-
-    vs = url.Values{}
-    for k, v := range m {
-        vs.Set(k, v)
-    }
-
-    return
-}
-
-// Build hubspot url using portalId and formId
-func buildFormsUrl(portalId, formId string) string {
-    return fmt.Sprintf(hubFormsUrl, portalId, formId)
 }
 
 // Convenience function to make a proper HubSpot request.
@@ -88,3 +73,20 @@ func BuildSubmit(pageName string, r *http.Request) (m map[string]string) {
 
     return
 }
+
+// Convert a map to url.Values
+func toValues(m map[string]string) (vs url.Values) {
+
+    vs = url.Values{}
+    for k, v := range m {
+        vs.Set(k, v)
+    }
+
+    return
+}
+
+// Build hubspot url using portalId and formId
+func buildFormsUrl(portalId, formId string) string {
+    return fmt.Sprintf(hubFormsUrl, portalId, formId)
+}
+
