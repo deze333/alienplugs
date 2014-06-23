@@ -43,7 +43,7 @@ func Submit(portalId, formId string, form map[string]string) (err error) {
 // hubspotuk is taken from the request cookies
 // The resulting map should be filled with the other parameters
 // for the form.
-func BuildSubmit(pageName string, r *http.Request) (m map[string]string) {
+func Build(pageName string, r *http.Request) (m map[string]string) {
 
     m = map[string]string{}
 
