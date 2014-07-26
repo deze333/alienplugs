@@ -110,6 +110,47 @@ func Get(access_token string, fields ...string) (data map[string]interface{}, er
     return
 }
 
+// Get all the companies listed as current in the linkedin response. For
+// proper results the passed argument should be a linkedin response of
+// containing "positions" and "headline".
+//
+// Its up to the implementation to decide which to use.
+func GetCurrentCompanies(lresp map[string]interface{}) (curPositions []map[string]string, headline string) {
+
+    var positionsMap map[string]interface{}
+    var ok bool
+
+    if headline, ok = lresp["headline"].(string); !ok {
+        headline = ""
+    }
+
+    if positionsMap, ok = lresp["positions"].(map[string]interface{}); !ok {
+        return
+    }
+
+    for _, pItem := range positionsMap {
+        positions, ok := pItem.([]interface{})
+
+        if !ok {
+            continue
+        }
+
+        for _, positionMap := range positions {
+            if position, ok := positionMap.(map[string]interface{}); ok {
+                if isCurrent, ok := position["isCurrent"].(bool); ok && isCurrent {
+                    companyMap := position["company"].(map[string]interface{})
+                    curPositions = append(curPositions, map[string]string{
+                        "company":  companyMap["name"].(string),
+                        "position": position["title"].(string),
+                    })
+                }
+            }
+        }
+    }
+
+    return
+}
+
 // Create LinkedIn-formatted profile request. LinkedIn format looks
 // like [api-url]/~:(id, picture-url, etc)
 func makeProfileQuery(params ...string) string {
