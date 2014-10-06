@@ -1,12 +1,12 @@
 package linkedin
 
 import (
-    "bytes"
-    "encoding/json"
-    "fmt"
-    "net/http"
-    "net/url"
-    "strings"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
 )
 
 // Flow:
@@ -15,17 +15,17 @@ import (
 // 3. Requests for profile information must contain AccessToken paramater
 
 const (
-    _LI_AUTH_URL     = "https://www.linkedin.com/uas/oauth2/authorization?"
-    _LI_VALIDATE_URL = "https://www.linkedin.com/uas/oauth2/accessToken?grant_type=authorization_code&code=%s&redirect_uri=%s&client_id=%s&client_secret=%s"
-    _LI_PROFILE_URL  = "//api.linkedin.com/v1/people/~"
+	_LI_AUTH_URL     = "https://www.linkedin.com/uas/oauth2/authorization?"
+	_LI_VALIDATE_URL = "https://www.linkedin.com/uas/oauth2/accessToken?grant_type=authorization_code&code=%s&redirect_uri=%s&client_id=%s&client_secret=%s"
+	_LI_PROFILE_URL  = "//api.linkedin.com/v1/people/~"
 )
 
 // Contains data for the linked in api
 type LinkedIn struct {
-    ApiKey    string
-    ApiSecret string
-    Redirect  string
-    State     string
+	ApiKey    string
+	ApiSecret string
+	Redirect  string
+	State     string
 }
 
 // Generate a an AuthUri - the user must be redirected here and accept
@@ -33,18 +33,18 @@ type LinkedIn struct {
 // sent to Validate quickly (under a minute) before linkedin expires it
 func (l *LinkedIn) AuthUri(scope ...string) string {
 
-    v := url.Values{}
-    v.Add("response_type", "code")
-    v.Add("client_id", l.ApiKey)
-    v.Add("state", l.State)
+	v := url.Values{}
+	v.Add("response_type", "code")
+	v.Add("client_id", l.ApiKey)
+	v.Add("state", l.State)
 
-    if len(scope) > 0 {
-        v.Add("scope", strings.Join(scope, " "))
-    }
+	if len(scope) > 0 {
+		v.Add("scope", strings.Join(scope, " "))
+	}
 
-    // the redirect_uri must be left unescaped
+	// the redirect_uri must be left unescaped
 
-    return fmt.Sprint(_LI_AUTH_URL, v.Encode(), "&redirect_uri="+l.Redirect)
+	return fmt.Sprint(_LI_AUTH_URL, v.Encode(), "&redirect_uri="+l.Redirect)
 }
 
 // Validate gets a (2 month) token that is used with Get to retreive
@@ -52,27 +52,27 @@ func (l *LinkedIn) AuthUri(scope ...string) string {
 // included (ie: linkedin reject is not an err)
 func (l *LinkedIn) ValidateToken(authToken string) (data map[string]interface{}, err error) {
 
-    postUrl := fmt.Sprintf(_LI_VALIDATE_URL, authToken, l.Redirect, l.ApiKey, l.ApiSecret)
-    println(postUrl)
-    //resp, err := http.PostForm(postUrl, url.Values{})
+	postUrl := fmt.Sprintf(_LI_VALIDATE_URL, authToken, l.Redirect, l.ApiKey, l.ApiSecret)
+	println(postUrl)
+	//resp, err := http.PostForm(postUrl, url.Values{})
 
-    req, _ := http.NewRequest("POST", postUrl, nil)
-    req.Header.Add("x-li-format", "json")
+	req, _ := http.NewRequest("POST", postUrl, nil)
+	req.Header.Add("x-li-format", "json")
 
-    c := http.Client{}
-    resp, err := c.Do(req)
+	c := http.Client{}
+	resp, err := c.Do(req)
 
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    defer resp.Body.Close()
+	defer resp.Body.Close()
 
-    data = map[string]interface{}{}
-    dec := json.NewDecoder(resp.Body)
-    dec.Decode(&data)
+	data = map[string]interface{}{}
+	dec := json.NewDecoder(resp.Body)
+	dec.Decode(&data)
 
-    return
+	return
 }
 
 // Get a user profile values from linkedin. If fields is blank the default
@@ -80,34 +80,34 @@ func (l *LinkedIn) ValidateToken(authToken string) (data map[string]interface{},
 // fields are requested from linkedin.
 func Get(access_token string, fields ...string) (data map[string]interface{}, err error) {
 
-    v := url.Values{}
-    v.Add("oauth2_access_token", access_token)
+	v := url.Values{}
+	v.Add("oauth2_access_token", access_token)
 
-    // Since linkedin parameters are going to get escaped (http does not like parenthesis
-    // in url) its best to make the request with no URL and create one manually.
-    // The Opaque value below makes sure that the Get request works with linkedin (otherwise
-    // go url-ecapes the parethesies and the other silly characters)
-    req, _ := http.NewRequest("GET", "", nil)
-    req.URL = &url.URL{
-        Scheme:   "https",
-        Host:     "api.linkedin.com",
-        Opaque:   makeProfileQuery(fields...),
-        RawQuery: v.Encode(),
-    }
-    req.Header.Add("x-li-format", "json")
+	// Since linkedin parameters are going to get escaped (http does not like parenthesis
+	// in url) its best to make the request with no URL and create one manually.
+	// The Opaque value below makes sure that the Get request works with linkedin (otherwise
+	// go url-ecapes the parethesies and the other silly characters)
+	req, _ := http.NewRequest("GET", "", nil)
+	req.URL = &url.URL{
+		Scheme:   "https",
+		Host:     "api.linkedin.com",
+		Opaque:   makeProfileQuery(fields...),
+		RawQuery: v.Encode(),
+	}
+	req.Header.Add("x-li-format", "json")
 
-    c := http.Client{}
-    resp, err := c.Do(req)
-    if err != nil {
-        return
-    }
-    defer resp.Body.Close()
+	c := http.Client{}
+	resp, err := c.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 
-    data = map[string]interface{}{}
-    dec := json.NewDecoder(resp.Body)
-    dec.Decode(&data)
+	data = map[string]interface{}{}
+	dec := json.NewDecoder(resp.Body)
+	dec.Decode(&data)
 
-    return
+	return
 }
 
 // Get all the companies listed as current in the linkedin response. For
@@ -117,59 +117,75 @@ func Get(access_token string, fields ...string) (data map[string]interface{}, er
 // Its up to the implementation to decide which to use.
 func GetCurrentCompanies(lresp map[string]interface{}) (curPositions []map[string]string, headline string) {
 
-    var positionsMap map[string]interface{}
-    var ok bool
+	var positionsMap map[string]interface{}
+	var ok bool
 
-    if headline, ok = lresp["headline"].(string); !ok {
-        headline = ""
-    }
+	if headline, ok = lresp["headline"].(string); !ok {
+		headline = ""
+	}
 
-    if positionsMap, ok = lresp["positions"].(map[string]interface{}); !ok {
-        return
-    }
+	if positionsMap, ok = lresp["positions"].(map[string]interface{}); !ok {
+		return
+	}
 
-    for _, pItem := range positionsMap {
-        positions, ok := pItem.([]interface{})
+	for _, pItem := range positionsMap {
+		positions, ok := pItem.([]interface{})
 
-        if !ok {
-            continue
-        }
+		if !ok {
+			continue
+		}
 
-        for _, positionMap := range positions {
-            if position, ok := positionMap.(map[string]interface{}); ok {
-                if isCurrent, ok := position["isCurrent"].(bool); ok && isCurrent {
-                    companyMap := position["company"].(map[string]interface{})
-                    curPositions = append(curPositions, map[string]string{
-                        "company":  companyMap["name"].(string),
-                        "position": position["title"].(string),
-                    })
-                }
-            }
-        }
-    }
+		for _, positionRaw := range positions {
+			if position, ok := positionRaw.(map[string]interface{}); ok {
+				if isCurrent, ok := position["isCurrent"].(bool); ok && isCurrent {
+					data := position["company"].(map[string]interface{})
+					pos := map[string]string{}
 
-    return
+					// Get company name
+					if val, ok := data["name"]; ok && val != nil {
+						pos["company"] = fmt.Sprint(val)
+					}
+
+					// Get title
+					if val, ok := position["title"]; ok && val != nil {
+						pos["position"] = fmt.Sprint(val)
+					}
+
+					curPositions = append(curPositions, pos)
+
+					/* BUGGY previous version:
+					   curPositions = append(curPositions, map[string]string{
+					       "company":  data["name"].(string),
+					       "position": position["title"].(string),
+					   })
+					*/
+				}
+			}
+		}
+	}
+
+	return
 }
 
 // Create LinkedIn-formatted profile request. LinkedIn format looks
 // like [api-url]/~:(id, picture-url, etc)
 func makeProfileQuery(params ...string) string {
 
-    if len(params) == 0 {
-        return _LI_PROFILE_URL
-    }
+	if len(params) == 0 {
+		return _LI_PROFILE_URL
+	}
 
-    buf := bytes.NewBufferString(_LI_PROFILE_URL + ":(")
+	buf := bytes.NewBufferString(_LI_PROFILE_URL + ":(")
 
-    last := len(params) - 1
-    comma := []byte(",")
-    for _, param := range params[:last] {
-        buf.Write([]byte(param))
-        buf.Write(comma)
-    }
+	last := len(params) - 1
+	comma := []byte(",")
+	for _, param := range params[:last] {
+		buf.Write([]byte(param))
+		buf.Write(comma)
+	}
 
-    buf.Write([]byte(params[last]))
-    buf.Write([]byte(")"))
+	buf.Write([]byte(params[last]))
+	buf.Write([]byte(")"))
 
-    return buf.String()
+	return buf.String()
 }
