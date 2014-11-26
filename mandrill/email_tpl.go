@@ -27,20 +27,21 @@ type Person struct {
 }
 
 type Message struct {
-	Html               string            `json:"html"`
-	Text               string            `json:"text"`
-	Subject            string            `json:"subject"`
-	FromEmail          string            `json:"from_email"`
-	FromName           string            `json:"from_name"`
-	To                 []Person          `json:"to"`
-	Headers            map[string]string `json:"headers,omitempty"`
-	Bcc                string            `json:"bcc_address,omitempty"`
-	TrackOpens         bool              `json:"track_opens"`
-	TrackClicks        bool              `json:"track_clicks"`
-	AutoText           bool              `json:"auto_text"`
-	PreserveRecipients bool              `json:"preserve_recipients"`
-	VarsGlob           []KeyVal          `json:"global_merge_vars,omitempty"`
-	Vars               []RcptVars        `json:"merge_vars,omitempty"`
+	Html               string              `json:"html"`
+	Text               string              `json:"text"`
+	Subject            string              `json:"subject"`
+	FromEmail          string              `json:"from_email"`
+	FromName           string              `json:"from_name"`
+	To                 []Person            `json:"to"`
+	Headers            map[string]string   `json:"headers,omitempty"`
+	Bcc                string              `json:"bcc_address,omitempty"`
+	TrackOpens         bool                `json:"track_opens"`
+	TrackClicks        bool                `json:"track_clicks"`
+	AutoText           bool                `json:"auto_text"`
+	PreserveRecipients bool                `json:"preserve_recipients"`
+	VarsGlob           []KeyVal            `json:"global_merge_vars,omitempty"`
+	Vars               []RcptVars          `json:"merge_vars,omitempty"`
+	Attachments        []map[string]string `json:"attachments,omitempty"`
 }
 
 type RcptVars struct {
@@ -55,7 +56,7 @@ type RcptVars struct {
 func NewEmail(tpl, subj string) *Email {
 	return &Email{
 		TplName: tpl,
-        Message: Message{Subject: subj, AutoText: true},
+		Message: Message{Subject: subj, AutoText: true},
 	}
 }
 
@@ -118,6 +119,14 @@ func (m *Email) AddVar(rcpt map[string]string, key, val string) {
 		RcptVars{
 			Rcpt: email,
 			Vars: []KeyVal{KeyVal{key, val}}})
+}
+
+func (m *Email) AddAttachment(mimeType, name, content string) {
+	m.Message.Attachments = append(m.Message.Attachments, map[string]string{
+		"type":    mimeType,
+		"name":    name,
+		"content": content,
+	})
 }
 
 //------------------------------------------------------------
