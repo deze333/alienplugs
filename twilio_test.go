@@ -23,8 +23,6 @@ func (t *TwilioParams) ok() bool {
 func TestTwilio(t *testing.T) {
 	var err error
 
-	return
-
 	// Load parameters
 	var tp TwilioParams
 	// Try private data first, if not use public
