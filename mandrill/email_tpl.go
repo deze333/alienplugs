@@ -11,7 +11,7 @@ import (
 
 type Email struct {
 	Key        string   `json:"key"`
-	TplName    string   `json:"template_name"`
+	TplName    string   `json:"template_name,omitempty"`
 	TplContent []KeyVal `json:"template_content"`
 	Message    Message  `json:"message"`
 }
@@ -53,10 +53,18 @@ type RcptVars struct {
 // Templated Mail
 //------------------------------------------------------------
 
+// Create email based on template key.
 func NewEmail(tpl, subj string) *Email {
 	return &Email{
 		TplName: tpl,
 		Message: Message{Subject: subj, AutoText: true},
+	}
+}
+
+// Create email based on provided HTML template.
+func NewEmail_Templateless(html, subj string) *Email {
+	return &Email{
+		Message: Message{Html: html, Subject: subj, AutoText: true},
 	}
 }
 
@@ -145,12 +153,11 @@ func (m *Email) Send(apikey string) (err error) {
 	fmt.Println(string(d))
 	fmt.Println("------ Sending ------")
 
-	resp, err := post(
-		MNDRL_MESSAGES_TEMPLATE,
-		m)
-
-	if err != nil {
-		return
+	var resp interface{}
+	if m.TplName != "" {
+		resp, err = post(MNDRL_MESSAGES_TEMPLATE, m)
+	} else {
+		resp, err = post(MNDRL_MESSAGES_TEMPLATELESS, m)
 	}
 
 	fmt.Println(resp)

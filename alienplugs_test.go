@@ -2,10 +2,11 @@ package alienplugs
 
 import (
 	"fmt"
-	"github.com/deze333/alienplugs/mandrill"
-	"github.com/deze333/skini"
 	"os"
 	"testing"
+
+	"github.com/deze333/alienplugs/mandrill"
+	"github.com/deze333/skini"
 )
 
 //------------------------------------------------------------
@@ -70,9 +71,17 @@ func TestMandrill(t *testing.T) {
 		"email":    mp.Support["email"],
 		"identity": mp.Support["identity"]}
 
-    // Get first template
-    tpl := mp.TplKeys[0]
-	mm := mandrill.NewEmail(mp.Tpl[tpl]["id"], mp.Tpl[tpl]["subj"])
+	// Get first template
+	tpl := mp.TplKeys[0]
+
+	// Option A:
+	// Send via template
+	//mm := mandrill.NewEmail(mp.Tpl[tpl]["id"], mp.Tpl[tpl]["subj"])
+
+	// Option B:
+	// Send via provided HTML template
+	mm := mandrill.NewEmail_Templateless("<p>*|name|*</p><p>Inline HTML text.</p>", mp.Tpl[tpl]["subj"])
+
 	mm.SetSender(sender)
 	mm.AddTo(recipient)
 	mm.SetReplyTo(recipient)
@@ -85,9 +94,9 @@ func TestMandrill(t *testing.T) {
 	//mm.AddTplContent("brief", mp.Vars[tpl]["brief"])
 
 	// Template merge vars
-    for k, v := range mp.Vars[tpl] {
-        mm.AddVar(recipient, k, v)
-    }
+	for k, v := range mp.Vars[tpl] {
+		mm.AddVar(recipient, k, v)
+	}
 
 	err = mm.Send(mp.ApiKey)
 	if err != nil {
