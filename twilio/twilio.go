@@ -20,7 +20,6 @@ if err != nil {
 
 */
 
-
 import (
 	"bytes"
 	"errors"
@@ -31,7 +30,7 @@ import (
 )
 
 const (
-    apiMsgUrl = "https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json"
+	apiMsgUrl = "https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json"
 )
 
 //------------------------------------------------------------
@@ -50,7 +49,7 @@ type TwilioCfg struct {
 
 //------------------------------------------------------------
 // Send SMS
-// 
+//
 // silently ignore invalid numbers (numeric only)
 // if twilio response status is not 201
 //    put response body into err and return
@@ -61,14 +60,11 @@ func (tc *TwilioCfg) SMS(toPhone, body string) (err error) {
 	var req *http.Request
 	var resp *http.Response
 
-    // silently ignore invalid numbers
-    // numeric only
-    if !validPhone(toPhone) {
-        return nil
-    }
+	// Only allow [0...9] characters
+	toPhone = cleanPhone(toPhone)
 
 	// append +
-    toPhone = "+" + toPhone
+	toPhone = "+" + toPhone
 
 	// trim long msg
 	if len(body) >= 160 {
@@ -120,15 +116,29 @@ func (tc *TwilioCfg) SMS(toPhone, body string) (err error) {
 
 func validPhone(phone string) bool {
 
-    if len(phone) == 0 {
-        return false
-    }
+	if len(phone) == 0 {
+		return false
+	}
 
-    for _, k := range phone {
-        if k < '0' || k > '9' {
-            return false
-        }
-    }
+	for _, k := range phone {
+		if k < '0' || k > '9' {
+			return false
+		}
+	}
 
-    return true
+	return true
+}
+
+// Removes all non-numeric characters from the phone.
+func cleanPhone(phone string) string {
+
+	var buf bytes.Buffer
+	for _, d := range phone {
+		if d < '0' || d > '9' {
+			continue
+		}
+		buf.WriteRune(d)
+	}
+
+	return buf.String()
 }
