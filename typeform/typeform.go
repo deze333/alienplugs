@@ -25,7 +25,7 @@ type Response struct {
 	Completed string            `json:"completed"`
 	Metadata  map[string]string `json:"metadata"`
 	Token     string            `json:"token"`
-	Hidden    map[string]string `json:"hidden"`
+	Hidden    map[string]string `json:"hidden,omitempty"`
 	Answers   map[string]string `json:"answers"`
 }
 
