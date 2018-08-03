@@ -2,9 +2,9 @@ package typeform
 
 import (
 	"fmt"
-	//"encoding/json"
 	"strings"
 	"time"
+	"encoding/json"
 
 	"github.com/deze333/alienplugs/util"
 )
@@ -14,35 +14,37 @@ import (
 //------------------------------------------------------------
 
 type Responses struct {
-	TotalItems      int `json:"total_items"`
-	PageCount       int `json:"page_count"`
-	Items           []*Item `json:"items"`
-	Hidden          map[string]string `json:"hidden,omitempty"`
-	Calculated      map[string]interface{} `json:"calculated,omitempty"`
+	TotalItems      int                     `json:"total_items"`
+	PageCount       int                     `json:"page_count"`
+	Items           []*Responses_Item       `json:"items"`
+	Hidden          map[string]string       `json:"hidden,omitempty"`
+	Calculated      map[string]interface{}  `json:"calculated,omitempty"`
 }
 
-type Item struct {
-	LandingId    string            `json:"landing_id"`
-	Token        string            `json:"token"`
-	LandedAt     time.Time         `json:"landed_at"`
-	SubmittedAt  time.Time         `json:"submitted_at"`
-	Metadata     map[string]string `json:"metadata"`
-	Answers      []Answer          `json:"answers"`
+type Responses_Item struct {
+	LandingId    string              `json:"landing_id"`
+	Token        string              `json:"token"`
+	LandedAt     *time.Time          `json:"landed_at"`
+	SubmittedAt  *time.Time          `json:"submitted_at"`
+	Metadata     map[string]string   `json:"metadata"`
+	Answers      []Responses_Answer  `json:"answers"`
+	Hidden       map[string]string   `json:"hidden,omitempty"`
+	//Calculated   map[string]interface{}  `json:"hidden,omitempty"`
 }
 
-type Answer struct {
-	Field  AnswerField       `json:"field"`
-	Type   string            `json:"type"`
+type Responses_Answer struct {
+	Field  Responses_FormField       `json:"field"`
+	Type   string                    `json:"type"`
 
 	/* 
-	Following field will depend on 'type':
-	text
-	email
-	number
-	boolean
-	date
-	choice
-	choices
+	Following fields content will depend on 'type':
+		text
+		email
+		number
+		boolean
+		date
+		choice
+		choices
 	*/
 
 	Text     string              `json:"text"`
@@ -54,7 +56,7 @@ type Answer struct {
 	Choices  AnswerValue_Choices `json:"choices"`
 }
 
-type AnswerField struct {
+type Responses_FormField struct {
 	Id     string            `json:"id"`
 	Type   string            `json:"type"`
 	Ref    string            `json:"ref"`
@@ -66,6 +68,49 @@ type AnswerValue_Choice struct {
 
 type AnswerValue_Choices struct {
 	Labels     []string            `json:"labels"`
+}
+
+//------------------------------------------------------------
+// Methods: AnswerValue_Choices
+//------------------------------------------------------------
+
+// Checks if choices contain given choice.
+func (o *AnswerValue_Choices) Contains(s string) bool {
+
+	for _, choice := range o.Labels {
+		if choice == s {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Converts labels to JSON string, ie ["one", "two", "three"].
+func (o *AnswerValue_Choices) JsonString() string {
+	
+	// Not using since don't want to encode chars like '<'
+	if false {
+		var s string
+		b, err := json.Marshal(o.Labels)
+		if err != nil {
+			s = fmt.Sprintf("%v", o.Labels)
+		} else {
+			s = string(b)
+		}
+
+		return s
+	}
+
+	// Simple serialization
+	var ss []string
+
+	for _, v := range o.Labels {
+		ss = append(ss, fmt.Sprintf("\"%v\"", v))
+	}
+
+	s := strings.Join(ss, ", ")
+	return fmt.Sprintf("[%v]", s)
 }
 
 //------------------------------------------------------------
@@ -95,14 +140,14 @@ func (o *Responses) Dump() []interface{} {
 }
 
 //------------------------------------------------------------
-// String: Item
+// String: Responses_Item
 //------------------------------------------------------------
 
-func (o *Item) String() string {
+func (o *Responses_Item) String() string {
 	return util.DumpToString("Item", o.Dump())
 }
 
-func (o *Item) Dump() []interface{} {
+func (o *Responses_Item) Dump() []interface{} {
 
 	ds := []interface{}{
 		"LandingId", o.LandingId,
@@ -110,6 +155,7 @@ func (o *Item) Dump() []interface{} {
 		"LandedAt", o.LandedAt,
 		"SubmittedAt", o.SubmittedAt,
 		"Metadata", o.Metadata,
+		"Hidden", o.Hidden,
 	}
 
 	for _, answer := range o.Answers {
@@ -122,14 +168,14 @@ func (o *Item) Dump() []interface{} {
 }
 
 //------------------------------------------------------------
-// String: Answer
+// String: Responses_Answer
 //------------------------------------------------------------
 
-func (o *Answer) String() string {
+func (o *Responses_Answer) String() string {
 	return util.DumpToString("Answer", o.Dump())
 }
 
-func (o *Answer) Dump() []interface{} {
+func (o *Responses_Answer) Dump() []interface{} {
 
 	ds := []interface{}{
 		"Field", o.Field.String(),
@@ -170,53 +216,17 @@ func (o *Answer) Dump() []interface{} {
 }
 
 //------------------------------------------------------------
-// String: AnswerField
+// String: Responses_FormField
 //------------------------------------------------------------
 
-func (o *AnswerField) String() string {
+func (o *Responses_FormField) String() string {
 	return util.DumpToStringLine("Field", o.Dump())
 }
 
-func (o *AnswerField) Dump() []interface{} {
+func (o *Responses_FormField) Dump() []interface{} {
 	return []interface{}{
 		"Id", o.Id,
 		"Type", o.Type,
 		"Ref", o.Ref,
 	}
 }
-
-//------------------------------------------------------------
-// Code producer
-//------------------------------------------------------------
-
-/*
-func (o *Responses) GoCodeString() string {
-
-	var ss []string
-
-	s := ` 
-	switch question.Id {
-`
-	ss = append(ss, s)
-
-	fs := `
-	case "%v":
-		// %v
-`
-
-	for _, val := range o.Questions {
-		s := fmt.Sprintf(fs, val.Id, val.Text)
-		ss = append(ss, s)
-	}
-
-	s  = ` 
-	default:
-		// TODO: Handle error
-	break
-	}
-`
-	ss = append(ss, s)
-
-	return strings.Join(ss, "")
-}
-*/
