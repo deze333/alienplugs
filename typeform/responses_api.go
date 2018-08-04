@@ -71,6 +71,26 @@ type AnswerValue_Choices struct {
 }
 
 //------------------------------------------------------------
+// Methods: Responses_Answer
+//------------------------------------------------------------
+
+// Returns either single choice or multiple choices
+// as a JSON string. Will return text value is such is present.
+func (o *Responses_Answer) ChoiceOrChoicesAsJsonString() string {
+
+	switch o.Type {
+	case "text":
+		return o.Text
+	case "choice":
+		return o.Choice.Label
+	case "choises":
+		return o.Choices.JsonString()
+	}
+
+	return ""
+}
+
+//------------------------------------------------------------
 // Methods: AnswerValue_Choices
 //------------------------------------------------------------
 
@@ -89,7 +109,7 @@ func (o *AnswerValue_Choices) Contains(s string) bool {
 // Converts labels to JSON string, ie ["one", "two", "three"].
 func (o *AnswerValue_Choices) JsonString() string {
 	
-	// Not using since don't want to encode chars like '<'
+	// Not using JSON Marshal since don't want to encode chars like '<'
 	if false {
 		var s string
 		b, err := json.Marshal(o.Labels)
@@ -106,6 +126,24 @@ func (o *AnswerValue_Choices) JsonString() string {
 	var ss []string
 
 	for _, v := range o.Labels {
+		ss = append(ss, fmt.Sprintf("\"%v\"", v))
+	}
+
+	s := strings.Join(ss, ", ")
+	return fmt.Sprintf("[%v]", s)
+}
+
+// Converts labels to JSON string, ie ["one", "two", "three"],
+// by also applying optional transform like "one" --> "OPTION_A".
+func (o *AnswerValue_Choices) JsonStringByMapping(transform map[string]string) string {
+	
+	var ss []string
+
+	for _, v := range o.Labels {
+		if v1, ok := transform[v]; ok {
+			v = v1
+		}
+
 		ss = append(ss, fmt.Sprintf("\"%v\"", v))
 	}
 
